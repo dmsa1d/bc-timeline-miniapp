@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <title>Activity Timeline</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px 18px;
+            background: #0b141a;
+            color: #e9edef;
+            font-family: -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", Arial, sans-serif;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #8696a0;
+            font-size: 14px;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 16px;
+            background: #202c33;
+        }
+
+        .status {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .description {
+            color: #8696a0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .error {
+            color: #fb7185;
+        }
+
+        .accounts {
+            margin-top: 18px;
+        }
+
+        .account {
+            padding: 12px 0;
+            border-top: 1px solid #34434b;
+            font-size: 14px;
+        }
+
+        .account span {
+            color: #8696a0;
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Activity Timeline</h1>
+        <div class="subtitle">
+            Telegram Mini App · Activity Monitor
+        </div>
+    </div>
+
+    <div class="card">
+        <div id="status" class="status">
+            Инициализация...
+        </div>
+
+        <div id="description" class="description">
+            Подключение к Telegram
+        </div>
+
+        <div id="accounts" class="accounts"></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        function setStatus(message, description, cssClass = "") {
+            const status = document.getElementById("status");
+
+            status.textContent = message;
+            status.className = "status " + cssClass;
+
+            document.getElementById("description").textContent =
+                description;
+        }
+
+        function getStartParameter() {
+            if (tg?.initDataUnsafe?.start_param) {
+                return tg.initDataUnsafe.start_param;
+            }
+
+            const query = new URLSearchParams(location.search);
+
+            if (query.has("tgWebAppStartParam")) {
+                return query.get("tgWebAppStartParam");
+            }
+
+            const hash = new URLSearchParams(
+                location.hash.replace(/^#/, "")
+            );
+
+            return hash.get("tgWebAppStartParam");
+        }
+
+        async function decodeData(encoded) {
+            const base64 = encoded
+                .replace(/-/g, "+")
+                .replace(/_/g, "/");
+
+            const padded = base64.padEnd(
+                Math.ceil(base64.length / 4) * 4,
+                "="
+            );
+
+            const binary = atob(padded);
+
+            const bytes = Uint8Array.from(
+                binary,
+                character => character.charCodeAt(0)
+            );
+
+            const stream = new Blob([bytes])
+                .stream()
+                .pipeThrough(new DecompressionStream("deflate"));
+
+            const json = await new Response(stream).text();
+
+            return JSON.parse(json);
+        }
+
+        async function initialize() {
+            const parameter = getStartParameter();
+
+            if (!parameter) {
+                setStatus(
+                    "Ожидание данных",
+                    "Приложение готово. История активности пока не передана."
+                );
+                return;
+            }
+
+            try {
+                const data = await decodeData(parameter);
+
+                if (
+                    data.v !== 1 ||
+                    !Number.isFinite(data.t) ||
+                    !Array.isArray(data.a)
+                ) {
+                    throw new Error("Неподдерживаемый формат данных");
+                }
+
+                const container =
+                    document.getElementById("accounts");
+
+                container.replaceChildren();
+
+                let totalEvents = 0;
+
+                for (const account of data.a) {
+                    if (
+                        !Array.isArray(account) ||
+                        typeof account[0] !== "string" ||
+                        !Array.isArray(account[1])
+                    ) {
+                        throw new Error("Некорректные данные аккаунта");
+                    }
+
+                    const name = account[0];
+                    const events = account[1];
+
+                    totalEvents += events.length;
+
+                    const row = document.createElement("div");
+                    row.className = "account";
+
+                    const label = document.createTextNode(name);
+                    const count = document.createElement("span");
+
+                    count.textContent = events.length + " событий";
+
+                    row.append(label, count);
+                    container.appendChild(row);
+                }
+
+                setStatus(
+                    "✓ Данные получены",
+                    "Аккаунтов: " + data.a.length +
+                    " · Событий: " + totalEvents,
+                    "success"
+                );
+
+            } catch (error) {
+                setStatus(
+                    "Ошибка передачи данных",
+                    error.message,
+                    "error"
+                );
+            }
+        }
+
+        initialize();
+    </script>
+
+</body>
+</html>
