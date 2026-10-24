@@ -130,6 +130,33 @@
       return {name:item[0],events};
     });
   }
+  const API_URL = 'https://appliance-lawn-stripes-native.trycloudflare.com/timeline';
+
+  async function loadHistory(){
+    if(!tg?.initData) throw Error('Откройте приложение через Telegram');
+
+    const response = await fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({initData:tg.initData}),
+      cache:'no-store'
+    });
+
+    if(!response.ok) throw Error('API вернул HTTP '+response.status);
+
+    const data = await response.json();
+
+    if(!Array.isArray(data.accounts)) throw Error('Некорректный ответ API');
+
+    return data.accounts.map(account=>({
+      name:account.name,
+      events:account.events.map(event=>({
+        at:Date.parse(event.time),
+        online:event.status==='ONLINE'
+      })).sort((a,b)=>a.at-b.at)
+    }));
+  }
+
   function showMessage(text,fail=false){$('message').textContent=text;$('message').className='state'+(fail?' error':'');}
   function paintChoices(){
     const wrap=$('choices');wrap.replaceChildren();
@@ -216,10 +243,9 @@
     btn.addEventListener('click',()=>{periodDays=Number(btn.dataset.period);for(const b of $('periods').querySelectorAll('button'))b.setAttribute('aria-pressed',String(b===btn));draw()});
   }
   (async()=>{
-    const p=getParam();
-    if(!p){showMessage('Приложение готово. Откройте ссылку с данными, которую отправит бот.');return}
     try{
-      const data=await unpack(p);entries=parse(data);endMs=Date.now();
+      showMessage('Загружаем историю с Galaxy...');
+      entries=await loadHistory();endMs=Date.now();
       chosen=entries.slice(0,3).map(e=>e.name);
       if(!entries.length){showMessage('Получена пустая история.');return}
       for(const e of entries)colorFor(e.name);
