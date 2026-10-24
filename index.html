@@ -65,6 +65,13 @@
     <div><h1>Activity Timeline</h1><div class="sub">Telegram Mini App · Activity Monitor</div></div>
     <span class="badge" id="badge">MINI APP</span>
   </header>
+  <button type="button" id="forceRefresh"
+  style="width:100%;margin-bottom:14px;padding:11px;
+         border:1px solid #5d93bf;border-radius:10px;
+         background:#244a66;color:#d3edff;
+         font-size:13px;font-weight:650;cursor:pointer">
+  ↻ Принудительно обновить
+</button>
   <div id="message" class="state" role="status">Загрузка…</div>
   <div id="app" hidden>
     <section class="card" aria-label="Период">
@@ -93,6 +100,11 @@
   const tg = window.Telegram?.WebApp;
   if (tg) { try { tg.ready(); tg.expand(); } catch (_) {} }
   const $ = id => document.getElementById(id);
+  $('forceRefresh').addEventListener('click', () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set('v', String(Date.now()));
+  window.location.replace(url.toString());
+});
   const palette = ['#4bc9b8','#7eaaff','#ffbd67','#df8fff','#ff7b96','#a9d76b','#67c8e8','#eabca4','#d4a8ff'];
   const TZ = 'Asia/Almaty';
   const offset = 5 * 3600 * 1000; // Для дат начиная с 2024 г. Алматы: UTC+5
