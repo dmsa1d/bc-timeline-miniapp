@@ -221,10 +221,43 @@
     const days=$('days');days.replaceChildren();$('detail').hidden=true;
     const sum=$('summary');sum.replaceChildren();
     for(const a of selected){
-      const intervals=segmentsFor(a,from,endMs);const onlineMs=intervals.filter(s=>s.status==='ONLINE').reduce((a,s)=>a+s.to-s.from,0);
-      const stat=document.createElement('div');stat.className='stat';stat.style.borderTop=`3px solid ${colorFor(a.name)}`;
-      const b=document.createElement('b');b.textContent=duration(onlineMs);b.style.color=colorFor(a.name);
-      const sm=document.createElement('small');sm.textContent=a.name+' · ONLINE';stat.append(b,sm);sum.appendChild(stat);
+      const intervals=segmentsFor(a,from,endMs);
+const onlineMs=intervals
+  .filter(s=>s.status==='ONLINE')
+  .reduce((sum,s)=>sum+s.to-s.from,0);
+
+const privateMs=privateSegmentsFor(a,from,endMs)
+  .reduce((total,p)=>total+intervals
+    .filter(s=>s.status==='ONLINE')
+    .reduce((sum,s)=>sum+Math.max(0,
+      Math.min(p.to,s.to)-Math.max(p.from,s.from)),0),0);
+
+const stat=document.createElement('div');
+stat.className='stat';
+stat.style.borderTop=`3px solid ${colorFor(a.name)}`;
+
+const b=document.createElement('b');
+b.textContent=duration(onlineMs);
+b.style.color=colorFor(a.name);
+
+const sm=document.createElement('small');
+sm.textContent=a.name+' · ONLINE';
+
+stat.append(b,sm);
+
+if(a.showEvents && a.showEvents.length){
+  const pb=document.createElement('b');
+  pb.textContent=duration(privateMs);
+  pb.style.color='#1e40af';
+  pb.style.marginTop='9px';
+
+  const psm=document.createElement('small');
+  psm.textContent=a.name+' · FULLPRIVATE';
+
+  stat.append(pb,psm);
+}
+
+sum.appendChild(stat);
     }
     if(!selected.length){days.innerHTML='<div class="empty">Выберите хотя бы один аккаунт.</div>';return}
     let day=dayStart(endMs-1);
