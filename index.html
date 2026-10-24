@@ -47,7 +47,7 @@
     .segment{position:absolute;top:0;bottom:0;pointer-events:none}
     .online{z-index:2}
     .offline{background:var(--off)}
-    .fullprivate{background:#f49b47;z-index:3}
+    .fullprivate{background:#ff9f1c;z-index:3}
     .unknown{background:repeating-linear-gradient(130deg,#263740 0px,#263740 3px,#19252c 3px,#19252c 8px)}
     .marker{position:absolute;top:0;bottom:0;width:1px;background:#ffffff10;pointer-events:none;z-index:4}
     .detail{margin:0 0 14px;padding:13px 14px;background:#203742;border:1px solid #42657a;border-radius:12px;line-height:1.7}
@@ -82,7 +82,7 @@
       <div class="hint" id="choiceHint">Выберите до трёх аккаунтов.</div>
     </section>
     <div id="summary" class="summary" aria-live="polite"></div>
-    <div class="legend"><span><i class="swatch" style="background:#48b6ae"></i>ONLINE — цвет аккаунта</span><span><i class="swatch" style="background:#f49b47"></i>FULLPRIVATE</span><span><i class="swatch" style="background:#34414a"></i>OFFLINE</span><span><i class="swatch unknown"></i>Нет истории</span></div>
+    <div class="legend"><span><i class="swatch" style="background:#48b6ae"></i>ONLINE — цвет аккаунта</span><span><i class="swatch" style="background:#ff9f1c"></i>FULLPRIVATE</span><span><i class="swatch" style="background:#34414a"></i>OFFLINE</span><span><i class="swatch unknown"></i>Нет истории</span></div>
     <div id="detail" class="detail" hidden aria-live="polite"></div>
     <div id="days"></div>
   </div>
@@ -209,7 +209,7 @@
   function showDetails(acc,seg){
     const d=$('detail');d.replaceChildren();
     const strong=document.createElement('strong');strong.textContent=acc.name+' · '+seg.status;
-    strong.style.color=seg.status==='FULLPRIVATE'?'#f49b47':
+    strong.style.color=seg.status==='FULLPRIVATE'?'#ff9f1c':
       seg.status==='ONLINE'?colorFor(acc.name):'#e9edef';
     const br=document.createElement('br');
     const small=document.createElement('small');small.textContent=`${fullFmt.format(seg.from)} — ${fullFmt.format(seg.to)} · ${duration(seg.to-seg.from)}`;
