@@ -388,7 +388,7 @@
     d.replaceChildren();
 
     const strong=document.createElement('strong');
-    strong.textContent=acc.name+' · '+(seg.status==='INVISIBLE'?'👻 INVISIBLE':seg.status);
+    strong.textContent=acc.name+' · '+seg.status;
     strong.style.color=seg.status==='FULLPRIVATE'?'#1e40af':
       seg.status==='ONLINE'?colorFor(acc.name):'#e9edef';
 
@@ -864,7 +864,8 @@
         nick.textContent=acc.name;
         const statusLabel=document.createElement('span');
         statusLabel.className='account-status';
-        statusLabel.textContent=latest==='INVISIBLE'?'👻 INVISIBLE':latest;
+        statusLabel.textContent=latest;
+        statusLabel.style.color=latest==='ONLINE'?'#4ade80':latest==='OFFLINE'?'#fb7185':'var(--muted)';
         label.append(nick,statusLabel);
         label.title=acc.name+' · '+latest;
         label.style.color=colorFor(acc.name);
