@@ -44,6 +44,8 @@
     .row{display:grid;grid-template-columns:92px minmax(0,1fr);gap:7px;align-items:center;margin-bottom:7px;min-width:0}
     .row:last-child{margin-bottom:0}
     .name{font-size:11px;font-weight:640;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .name .account-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:11px}
+    .name .account-status{display:block;white-space:nowrap;line-height:11px;font-size:9px;font-weight:500;color:var(--muted)}
     .track{height:23px;width:100%;display:block;position:relative;overflow:hidden;border:1px solid #3b4952;border-radius:5px;background:var(--unknown);cursor:crosshair;touch-action:pan-y}
     .day-gesture{touch-action:pan-y;user-select:none;-webkit-user-select:none}
     .day-gesture .axis{touch-action:pan-y}
@@ -52,6 +54,7 @@
     .segment{position:absolute;top:0;bottom:0;pointer-events:none}
     .online{z-index:2}
     .offline{background:var(--off)}
+    .invisible{background:var(--off)}
     .fullprivate{background:#1e40af;z-index:3}
     .unknown{background:repeating-linear-gradient(130deg,#263740 0px,#263740 3px,#19252c 3px,#19252c 8px)}
     .marker{position:absolute;top:0;bottom:0;width:1px;background:#ffffff10;pointer-events:none;z-index:4}
@@ -264,7 +267,7 @@
       name:account.name,
       events:account.events.map(event=>({
         at:Date.parse(event.time),
-        online:event.status==='ONLINE'
+        status:event.status
       })).sort((a,b)=>a.at-b.at),
       showEvents:(account.show_events||[]).map(event=>({
         at:Date.parse(event.time),
@@ -328,7 +331,7 @@
 
     for(const e of acc.events){
       if(e.at<=from){
-        status=e.online?'ONLINE':'OFFLINE';
+        status=e.status;
         continue;
       }
       if(e.at>=to)break;
@@ -337,7 +340,7 @@
         out.push({from:cursor,to:e.at,status});
       }
       cursor=e.at;
-      status=e.online?'ONLINE':'OFFLINE';
+      status=e.status;
     }
 
     if(cursor<to)out.push({from:cursor,to,status});
@@ -385,7 +388,7 @@
     d.replaceChildren();
 
     const strong=document.createElement('strong');
-    strong.textContent=acc.name+' · '+seg.status;
+    strong.textContent=acc.name+' · '+(seg.status==='INVISIBLE'?'👻 INVISIBLE':seg.status);
     strong.style.color=seg.status==='FULLPRIVATE'?'#1e40af':
       seg.status==='ONLINE'?colorFor(acc.name):'#e9edef';
 
@@ -855,8 +858,15 @@
 
         const label=document.createElement('div');
         label.className='name';
-        label.textContent=acc.name;
-        label.title=acc.name;
+        const latest=acc.events.length?acc.events[acc.events.length-1].status:'UNKNOWN';
+        const nick=document.createElement('span');
+        nick.className='account-name';
+        nick.textContent=acc.name;
+        const statusLabel=document.createElement('span');
+        statusLabel.className='account-status';
+        statusLabel.textContent=latest==='INVISIBLE'?'👻 INVISIBLE':latest;
+        label.append(nick,statusLabel);
+        label.title=acc.name+' · '+latest;
         label.style.color=colorFor(acc.name);
 
         const track=document.createElement('button');
